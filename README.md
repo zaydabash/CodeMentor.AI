@@ -13,6 +13,9 @@ Upload a repository (ZIP file or Git URL) and get:
 ## Visual Overview
 
 ### Landing Page
+
+![Landing Page](docs/screenshots/landing-page.png)
+
 The landing page features a clean, modern interface with:
 - **Header**: CodeMentor.AI branding with "Try Demo" navigation
 - **Hero Section**: Prominent title "Autonomous Debug Assistant" with clear value proposition
@@ -22,11 +25,17 @@ The landing page features a clean, modern interface with:
   - **PR Drafts**: Generate unified diffs with explanations, risk notes, and test plans
 
 ### Upload Interface
+
+![Upload Interface](docs/screenshots/upload-interface.png)
+
 - Clean upload form supporting both ZIP file uploads and Git URL imports
 - Real-time progress indicators during repository ingestion
 - Automatic navigation to job analysis page upon successful upload
 
 ### Analysis Dashboard
+
+![Analysis Dashboard](docs/screenshots/analysis-dashboard.png)
+
 - Job status tracking with real-time updates (queued → analyzing → pr_ready → done)
 - File tree visualization of analyzed repository
 - Issue list with filtering by severity and category
@@ -34,6 +43,9 @@ The landing page features a clean, modern interface with:
 - "Generate PR Draft" button for selected issues
 
 ### PR Draft Viewer
+
+![PR Draft Viewer](docs/screenshots/pr-viewer.png)
+
 - Comprehensive PR description with categorized issue breakdown
 - Risk notes section highlighting potential concerns
 - Test plan suggestions for validation
