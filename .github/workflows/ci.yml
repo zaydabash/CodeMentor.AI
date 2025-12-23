@@ -33,7 +33,7 @@ jobs:
       - name: Run bandit
         run: |
           cd backend
-          bandit -r app/ || true
+          bandit -r app/
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -68,7 +68,7 @@ jobs:
       - name: Run Python tests
         run: |
           cd backend
-          pytest tests/ -v || true
+          pytest tests/ -v
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -83,5 +83,5 @@ jobs:
       - name: Run frontend tests
         run: |
           cd frontend
-          npm test || true
+          npm test
 

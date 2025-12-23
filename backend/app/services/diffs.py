@@ -33,14 +33,18 @@ def parse_fix_response(response: str) -> Tuple[str, str, str]:
             diff_lines.append(line)
         elif in_diff and (line.startswith(" ") or line.startswith("-") or line.startswith("+")):
             diff_lines.append(line)
-        elif "Explanation:" in line.lower():
+        elif line.lower().startswith("explanation:"):
             in_diff = False
             in_explanation = True
-            explanation = line.split("Explanation:", 1)[-1].strip()
-        elif "Risk Note:" in line.lower() or "Risk:" in line.lower():
+            explanation = line[12:].strip()  # len("explanation:") == 12
+        elif line.lower().startswith("risk note:") or line.lower().startswith("risk:"):
             in_explanation = False
             in_risk = True
-            risk_note = line.split("Risk", 1)[-1].split(":", 1)[-1].strip()
+            # Handle both "Risk Note:" (10 chars) and "Risk:" (5 chars)
+            if line.lower().startswith("risk note:"):
+                risk_note = line[10:].strip()
+            else:
+                risk_note = line[5:].strip()
         elif in_explanation:
             explanation += " " + line.strip()
         elif in_risk:

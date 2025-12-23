@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { Badge } from "@/components/ui/badge"
+import { CodeSnippet } from "@/components/CodeSnippet"
 
 interface Issue {
   id: number
@@ -10,6 +12,8 @@ interface Issue {
   summary: string
   rationale: string
   confidence: number
+  line_span?: string // AST analysis provides this
+  code_snippet?: string // Optional if we fetch it separately, but ideally included or fetched
 }
 
 interface IssueListProps {
@@ -20,6 +24,7 @@ interface IssueListProps {
 
 export default function IssueList({ issues, selectedIssues, onSelectionChange }: IssueListProps) {
   const [filter, setFilter] = useState<{ severity?: string; category?: string }>({})
+  const [expandedIssues, setExpandedIssues] = useState<Set<number>>(new Set())
 
   const filteredIssues = issues.filter((issue) => {
     if (filter.severity && issue.severity !== filter.severity) return false
@@ -37,10 +42,30 @@ export default function IssueList({ issues, selectedIssues, onSelectionChange }:
     onSelectionChange(newSelected)
   }
 
-  const severityColors: Record<string, string> = {
-    high: 'bg-red-100 text-red-800',
-    med: 'bg-yellow-100 text-yellow-800',
-    low: 'bg-gray-100 text-gray-800',
+  const toggleExpand = (issueId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newExpanded = new Set(expandedIssues);
+    if (newExpanded.has(issueId)) {
+      newExpanded.delete(issueId);
+    } else {
+      newExpanded.add(issueId);
+    }
+    setExpandedIssues(newExpanded);
+  }
+
+  const getSeverityVariant = (severity: string) => {
+    switch (severity.toLowerCase()) {
+      case 'high': return 'destructive'
+      case 'med': return 'secondary' // Yellowish usually, but secondary is grey/blue in default theme. we might need custom.
+      case 'low': return 'outline'
+      default: return 'default'
+    }
+  }
+
+  const parseLineSpan = (span?: string): { start: number, end: number } => {
+    if (!span) return { start: 1, end: 1 };
+    const [start, end] = span.split('-').map(Number);
+    return { start: start || 1, end: end || start || 1 };
   }
 
   return (
@@ -72,42 +97,58 @@ export default function IssueList({ issues, selectedIssues, onSelectionChange }:
       </div>
 
       <div className="space-y-2">
-        {filteredIssues.map((issue) => (
-          <div
-            key={issue.id}
-            className={`p-4 border rounded-lg cursor-pointer ${
-              selectedIssues.has(issue.id) ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-            }`}
-            onClick={() => toggleIssue(issue.id)}
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-1">
-                  <input
-                    type="checkbox"
-                    checked={selectedIssues.has(issue.id)}
-                    onChange={() => toggleIssue(issue.id)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <span className="font-medium">{issue.summary}</span>
-                  <span className={`px-2 py-1 rounded text-xs ${severityColors[issue.severity] || ''}`}>
-                    {issue.severity}
-                  </span>
-                  <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700">
-                    {issue.category}
+        {filteredIssues.map((issue) => {
+          const { start, end } = parseLineSpan(issue.line_span);
+          return (
+            <div
+              key={issue.id}
+              className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedIssues.has(issue.id) ? 'border-primary/50 bg-blue-50/50' : 'border-gray-200 hover:bg-gray-50'
+                }`}
+              onClick={() => toggleIssue(issue.id)}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <input
+                      type="checkbox"
+                      checked={selectedIssues.has(issue.id)}
+                      onChange={() => toggleIssue(issue.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <span className="font-medium text-sm">{issue.summary}</span>
+                    <Badge variant={getSeverityVariant(issue.severity)}>
+                      {issue.severity}
+                    </Badge>
+                    <Badge variant="outline">
+                      {issue.category}
+                    </Badge>
+                  </div>
+                  <div className="ml-6 space-y-1">
+                    <p className="text-sm text-gray-600">{issue.rationale}</p>
+                    <div className="flex items-center text-xs text-gray-500 font-mono">
+                      <span>{issue.file_path}</span>
+                      <span className="mx-2">:</span>
+                      <span>Lines {start}-{end}</span>
+                    </div>
+                    {/* 
+                           In a real app, we would fetch the code snippet here. 
+                           For now, we can only display it if passed, or we show a placeholder.
+                        */}
+                  </div>
+                </div>
+                <div className="flex flex-col items-end space-y-2">
+                  <span className="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-1 rounded">
+                    {(issue.confidence * 100).toFixed(0)}% Conf
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 ml-6">{issue.rationale}</p>
-                <p className="text-xs text-gray-500 ml-6 mt-1">{issue.file_path}</p>
               </div>
-              <span className="text-xs text-gray-500">
-                {(issue.confidence * 100).toFixed(0)}%
-              </span>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
 }
+
 
