@@ -1,8 +1,8 @@
-from typing import List, Dict
+
 from app.services.propose import propose_fixes_for_issues
 
 
-def assemble_pr(job_id: int, issues: List[Dict], repo_path: str) -> Dict:
+def assemble_pr(job_id: int, issues: list[dict], repo_path: str) -> dict:
     file_fixes = propose_fixes_for_issues(issues, repo_path)
 
     title = f"Fix {len(issues)} issues identified by CodeMentor.AI"

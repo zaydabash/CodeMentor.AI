@@ -18,7 +18,7 @@ test:
 
 lint:
 	@echo "Running linters..."
-	@cd backend && ruff check . && bandit -r app/
+	@cd backend && ruff check . && bandit -c pyproject.toml -r app/
 	@cd frontend && npm run lint
 	@python3 scripts/check_no_emoji.py
 

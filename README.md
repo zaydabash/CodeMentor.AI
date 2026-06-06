@@ -16,28 +16,27 @@ Upload a repository (ZIP file or Git URL) and get:
 
 ![Landing Page](docs/screenshots/landingpage.png)
 
-The landing page features a clean, modern interface with:
-- **Header**: CodeMentor.AI branding with "Try Demo" navigation
-- **Hero Section**: Prominent title "Autonomous Debug Assistant" with clear value proposition
-- **Feature Cards**: Three cards highlighting key capabilities:
-  - **Upload & Analyze**: Upload ZIP files or provide Git URLs for codebase parsing
-  - **AI-Powered Detection**: Combines static analysis with LLM reasoning for comprehensive issue detection
-  - **PR Drafts**: Generate unified diffs with explanations, risk notes, and test plans
+The landing page uses a dark, low-chrome interface:
+- **Header**: CodeMentor.AI branding with a "Try demo" link
+- **Hero**: Headline with a clear value proposition and primary call to action
+- **How it works**: Three cards covering the core capabilities:
+  - **Upload and analyze**: Upload ZIP files or provide Git URLs for codebase parsing
+  - **Static analysis plus reasoning**: Combines ruff, bandit, and eslint with LLM reasoning to detect issues
+  - **PR drafts**: Generate unified diffs with explanations, risk notes, and test plans
 
 ### Upload Interface
 
 ![Upload Interface](docs/screenshots/upload-interface.png)
 
 - Clean upload form supporting both ZIP file uploads and Git URL imports
-- Real-time progress indicators during repository ingestion
-- Automatic navigation to job analysis page upon successful upload
+- Progress indicator during repository ingestion
+- Automatic navigation to the job analysis page upon successful upload
 
 ### Analysis Dashboard
 
 ![Analysis Dashboard](docs/screenshots/analysis-dashboard.png)
 
-- Job status tracking with real-time updates (queued → analyzing → pr_ready → done)
-- File tree visualization of analyzed repository
+- Job status tracking with polling updates (queued, analyzing, pr_ready, done)
 - Issue list with filtering by severity and category
 - Confidence scores and detailed rationale for each detected issue
 - "Generate PR Draft" button for selected issues
@@ -49,7 +48,7 @@ The landing page features a clean, modern interface with:
 - Comprehensive PR description with categorized issue breakdown
 - Risk notes section highlighting potential concerns
 - Test plan suggestions for validation
-- Side-by-side diff viewer with syntax highlighting
+- Side-by-side diff viewer
 - Export options for `.patch` files and markdown PR descriptions
 
 ## Architecture
@@ -70,8 +69,14 @@ The landing page features a clean, modern interface with:
        │
        ├──► LLM Provider (OpenAI/Anthropic/Local)
        │
-       └──► Background Workers (Dramatiq)
+       └──► Task Execution
+            - Default: in-process (FastAPI BackgroundTasks)
+            - Production: Dramatiq workers via Redis (set REDIS_URL)
 ```
+
+By default there is no separate worker process: analysis runs in-process after
+the API responds, so the system works out of the box with no extra services.
+Set `REDIS_URL` to route analysis through a standalone Dramatiq worker instead.
 
 ## Quickstart
 
@@ -134,6 +139,7 @@ See `.env.example` for all options. Key variables:
 - `ANTHROPIC_API_KEY`: Required if using Anthropic
 - `DATABASE_URL`: Database connection string (defaults to SQLite)
 - `WORKSPACE_DIR`: Directory for storing uploaded repos
+- `REDIS_URL`: Optional. When set, analysis is dispatched to a Dramatiq worker via Redis instead of running in-process
 
 ## How It Works
 
@@ -222,9 +228,9 @@ Builds and runs both frontend and backend services.
 
 - LLM analysis is limited by token budgets (configurable via `MAX_TOKENS`)
 - Large repositories may be truncated or sampled
-- Static analysis tools must be installed and available in PATH
+- Static analysis tools must be installed and available in PATH (ruff and bandit are Python dependencies; eslint is resolved from the analyzed repo or `npx`)
 - Git imports require public repositories or proper authentication
-- Background workers use in-process Dramatiq by default (swap to Redis/RabbitMQ for production)
+- Analysis runs in-process by default; set `REDIS_URL` to use a standalone Dramatiq worker for production
 
 ## Next Steps
 

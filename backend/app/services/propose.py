@@ -1,12 +1,12 @@
-from typing import List, Dict
-from app.llm.provider import get_llm_provider
-from app.llm.prompts import get_fix_proposal_prompt
-from app.services.diffs import parse_fix_response
-from pathlib import Path
 import os
+from pathlib import Path
+
+from app.llm.prompts import get_fix_proposal_prompt
+from app.llm.provider import get_llm_provider
+from app.services.diffs import parse_fix_response
 
 
-def propose_fixes_for_issues(issues: List[Dict], repo_path: str) -> Dict[str, Dict]:
+def propose_fixes_for_issues(issues: list[dict], repo_path: str) -> dict[str, dict]:
     llm_provider = get_llm_provider()
     file_fixes = {}
 
@@ -18,11 +18,11 @@ def propose_fixes_for_issues(issues: List[Dict], repo_path: str) -> Dict[str, Di
                     full_path = Path(file_path)
                 else:
                     full_path = Path(repo_path) / file_path
-                
+
                 if not full_path.exists():
                     continue
-                    
-                with open(full_path, "r", encoding="utf-8", errors="ignore") as f:
+
+                with open(full_path, encoding="utf-8", errors="ignore") as f:
                     file_content = f.read()
 
                 prompt = get_fix_proposal_prompt(file_content, issue)

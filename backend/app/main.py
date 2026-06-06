@@ -1,13 +1,23 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import jobs, repos, pr, health
+
 from app.models.base import Base, engine
+from app.routes import health, jobs, pr, repos
 
 app = FastAPI(title="CodeMentor.AI API", version="1.0.0")
 
+# Comma-separated list of allowed origins; defaults to the local frontend.
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

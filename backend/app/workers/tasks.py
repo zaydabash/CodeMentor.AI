@@ -1,12 +1,12 @@
-from sqlalchemy.orm import Session
+import dramatiq
+
 from app.models.base import SessionLocal
-from app.models.job import Job
 from app.models.issue import Issue
+from app.models.job import Job
 from app.models.pr import PR, PRFileChange
 from app.models.repo import Repo
 from app.services.analyze import analyze_repo
 from app.services.pr_assemble import assemble_pr
-import dramatiq
 from app.workers.queue import broker
 
 dramatiq.set_broker(broker)
@@ -107,10 +107,11 @@ def propose_fixes(job_id: int, issue_ids: list):
             )
             db.add(file_change)
 
+        job.status = "done"
         db.commit()
         db.refresh(pr)
         return pr.id
-    except Exception as e:
+    except Exception:
         db.rollback()
         return None
     finally:

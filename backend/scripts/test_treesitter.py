@@ -1,24 +1,25 @@
-from tree_sitter import Language, Parser
-import tree_sitter_python
 import tree_sitter_javascript
+import tree_sitter_python
 import tree_sitter_typescript
+from tree_sitter import Language, Parser
+
 
 def test_setup():
     print("Testing Tree-sitter setup...")
     try:
-        # Tried adding name argument
+        # Confirm every grammar loads, not just python.
         py_lang = Language(tree_sitter_python.language())
-        js_lang = Language(tree_sitter_javascript.language())
-        ts_lang = Language(tree_sitter_typescript.language_typescript())
-        
+        Language(tree_sitter_javascript.language())
+        Language(tree_sitter_typescript.language_typescript())
+
         parser = Parser(py_lang)
         # parser.set_language(py_lang) - removed in new version
-        
+
         code = b"def foo(): pass"
         tree = parser.parse(code)
         print(f"Parsed python: {tree.root_node.type}")
         assert tree.root_node.type == "module"
-        
+
         print("Tree-sitter setup valid!")
         return True
     except Exception as e:
@@ -26,7 +27,7 @@ def test_setup():
         # Let's inspect what tree_sitter_python.language() actually returns
         try:
             print(f"Type of language obj: {type(tree_sitter_python.language())}")
-        except:
+        except Exception:
             pass
         return False
 

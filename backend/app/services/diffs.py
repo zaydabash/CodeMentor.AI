@@ -1,23 +1,21 @@
 import difflib
-from typing import Tuple
 
 
 def generate_unified_diff(original: str, modified: str, file_path: str) -> str:
-    original_lines = original.splitlines(keepends=True)
-    modified_lines = modified.splitlines(keepends=True)
-
+    # Use lineterm="" with newline-free lines and join with "\n" so each diff
+    # line (including the ---/+++/@@ headers) sits on its own line.
     diff = difflib.unified_diff(
-        original_lines,
-        modified_lines,
+        original.splitlines(),
+        modified.splitlines(),
         fromfile=f"a/{file_path}",
         tofile=f"b/{file_path}",
         lineterm="",
     )
 
-    return "".join(diff)
+    return "\n".join(diff)
 
 
-def parse_fix_response(response: str) -> Tuple[str, str, str]:
+def parse_fix_response(response: str) -> tuple[str, str, str]:
     lines = response.split("\n")
     diff_lines = []
     explanation = ""

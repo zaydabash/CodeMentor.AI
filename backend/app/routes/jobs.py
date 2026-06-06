@@ -1,24 +1,26 @@
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Optional, List
+from sqlalchemy.orm import Session
+
 from app.models.base import get_db
-from app.models.job import Job
 from app.models.issue import Issue
-from app.workers.tasks import run_analysis
+from app.models.job import Job
 from app.models.repo import Repo
+from app.workers.queue import is_async_broker
+from app.workers.tasks import run_analysis
 
 router = APIRouter()
 
 
 class JobCreateRequest(BaseModel):
     repo_id: int
-    options: Optional[dict] = {}
+    options: dict | None = {}
 
 
 @router.post("")
 async def create_job(
     request: JobCreateRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     repo = db.query(Repo).filter(Repo.id == request.repo_id).first()
@@ -30,7 +32,13 @@ async def create_job(
     db.commit()
     db.refresh(job)
 
-    run_analysis.send(job.id)
+    if is_async_broker():
+        # Production: hand off to a Dramatiq worker via Redis.
+        run_analysis.send(job.id)
+    else:
+        # Default dev setup has no separate worker, so run the actor's
+        # underlying function in-process once the response is sent.
+        background_tasks.add_task(run_analysis.fn, job.id)
 
     return {"job_id": job.id}
 
@@ -83,7 +91,7 @@ async def get_job_issues(
 
 
 class ProposeRequest(BaseModel):
-    issue_ids: List[int]
+    issue_ids: list[int]
 
 
 @router.post("/{job_id}/propose")
@@ -96,13 +104,13 @@ async def propose_fixes(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    from app.services.pr_assemble import assemble_pr
     from app.models.repo import Repo
-    
+    from app.services.pr_assemble import assemble_pr
+
     repo = db.query(Repo).filter(Repo.id == job.repo_id).first()
     if not repo:
         raise HTTPException(status_code=404, detail="Repo not found")
-    
+
     issues = db.query(Issue).filter(Issue.id.in_(request.issue_ids)).all()
     issues_data = [
         {
@@ -115,9 +123,9 @@ async def propose_fixes(
         }
         for issue in issues
     ]
-    
+
     pr_data = assemble_pr(job_id, issues_data, repo.path)
-    
+
     from app.models.pr import PR, PRFileChange
     pr = PR(
         job_id=job_id,
@@ -128,7 +136,7 @@ async def propose_fixes(
     )
     db.add(pr)
     db.flush()
-    
+
     for file_path, fix_data in pr_data["file_fixes"].items():
         file_change = PRFileChange(
             pr_id=pr.id,
@@ -136,9 +144,10 @@ async def propose_fixes(
             diff_unified=fix_data["diff"],
         )
         db.add(file_change)
-    
+
+    job.status = "done"
     db.commit()
     db.refresh(pr)
-    
+
     return {"pr_id": pr.id}
 

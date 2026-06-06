@@ -1,65 +1,91 @@
 import Link from 'next/link'
 
-export default function Home() {
+function Brand() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold">CodeMentor.AI</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/upload" className="text-gray-600 hover:text-gray-900">
-                Try Demo
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Autonomous Debug Assistant
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Upload a repo or paste a Git URL. Get automated bug detection, code smell analysis,
-            and PR-ready fixes with plain-English explanations.
-          </p>
-          <Link
-            href="/upload"
-            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700"
-          >
-            Get Started
-          </Link>
-        </div>
-
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-2">Upload & Analyze</h2>
-            <p className="text-gray-600">
-              Upload a zip file or provide a Git URL. The system parses your codebase and
-              identifies potential issues.
-            </p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-2">AI-Powered Detection</h2>
-            <p className="text-gray-600">
-              Combines static analysis tools with LLM reasoning to find bugs, security risks,
-              and code smells with confidence scores.
-            </p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-2">PR Drafts</h2>
-            <p className="text-gray-600">
-              Generate unified diffs with explanations, risk notes, and test plans.
-              Export as patch files or markdown.
-            </p>
-          </div>
-        </div>
-      </main>
-    </div>
+    <span className="flex items-center text-[16px] font-medium tracking-tight text-ink">
+      CodeMentor.AI
+    </span>
   )
 }
 
+const features = [
+  {
+    title: 'Upload and analyze',
+    body: 'Upload a zip file or provide a Git URL. The system parses your codebase and identifies potential issues.',
+  },
+  {
+    title: 'Static analysis plus reasoning',
+    body: 'Combines ruff, bandit, and eslint with LLM reasoning to find bugs, security risks, and code smells with confidence scores.',
+  },
+  {
+    title: 'PR drafts',
+    body: 'Generate unified diffs with explanations, risk notes, and test plans. Export as patch files or markdown.',
+  },
+]
+
+export default function Home() {
+  return (
+    <div className="min-h-screen">
+      <nav className="sticky top-0 z-50 border-b border-line-2 bg-canvas/80 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+          <Brand />
+          <Link href="/upload" className="btn-ghost rounded-sm px-4 py-2 text-[13.5px]">
+            Try demo
+          </Link>
+        </div>
+      </nav>
+
+      <main className="mx-auto max-w-6xl px-6">
+        <section className="py-28">
+          <div className="kicker mb-6 flex items-center gap-2.5">
+            <span className="h-[5px] w-[5px] rounded-full bg-faint" />
+            Autonomous debug assistant
+          </div>
+          <h1 className="max-w-3xl text-[clamp(34px,5vw,50px)] leading-[1.08]">
+            Find the bugs, ship the <span className="text-accent">fix</span>.
+          </h1>
+          <p className="mt-6 max-w-2xl text-[17px] leading-relaxed text-ink-2">
+            Upload a repository or paste a Git URL. CodeMentor.AI runs static analysis and LLM
+            reasoning to surface bugs, security risks, and code smells, then drafts PR-ready fixes
+            with plain-English explanations.
+          </p>
+          <div className="mt-9 flex flex-wrap gap-3">
+            <Link href="/upload" className="btn-primary rounded-sm px-5 py-2.5 text-[14px] font-normal">
+              Get started
+            </Link>
+            <Link href="/upload" className="btn-ghost rounded-sm px-5 py-2.5 text-[14px]">
+              Upload a repo
+            </Link>
+          </div>
+        </section>
+
+        <section className="border-t border-line-2 py-20">
+          <div className="kicker mb-3">How it works</div>
+          <h2 className="mb-12 max-w-xl text-[clamp(22px,3vw,30px)] leading-tight">
+            From repository to PR draft in one pass.
+          </h2>
+          <div className="grid grid-cols-1 gap-3.5 md:grid-cols-3">
+            {features.map((f, i) => (
+              <div key={f.title} className="lift rounded-sm border border-line bg-panel p-7">
+                <div className="kicker mb-4 flex items-center gap-2.5">
+                  <span className="grid h-[22px] w-[22px] place-items-center rounded-sm border border-line bg-accent/[0.07] text-[11px] font-normal text-accent">
+                    {i + 1}
+                  </span>
+                </div>
+                <h3 className="mb-2 text-[15.5px] font-normal text-ink">{f.title}</h3>
+                <p className="text-[14px] leading-relaxed text-ink-2">{f.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      <footer className="border-t border-line-2 py-10">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 text-[12.5px] text-faint">
+          <Brand />
+          <span>Automated code review and PR drafting.</span>
+        </div>
+      </footer>
+    </div>
+  )
+}

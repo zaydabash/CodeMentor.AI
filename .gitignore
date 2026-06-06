@@ -13,8 +13,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# Note: do not ignore a bare "lib/" here; it would also match frontend/lib/
+# (the web API client). Python virtualenv libs are already covered by venv/.
 parts/
 sdist/
 var/
@@ -61,4 +61,3 @@ Thumbs.db
 
 # Docker
 .dockerignore
-

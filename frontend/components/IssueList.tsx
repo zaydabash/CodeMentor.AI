@@ -1,8 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Badge } from "@/components/ui/badge"
-import { CodeSnippet } from "@/components/CodeSnippet"
 
 interface Issue {
   id: number
@@ -12,8 +10,7 @@ interface Issue {
   summary: string
   rationale: string
   confidence: number
-  line_span?: string // AST analysis provides this
-  code_snippet?: string // Optional if we fetch it separately, but ideally included or fetched
+  line_span?: string
 }
 
 interface IssueListProps {
@@ -22,9 +19,14 @@ interface IssueListProps {
   onSelectionChange: (selected: Set<number>) => void
 }
 
+const severityClass: Record<string, string> = {
+  high: 'text-sev-red border-sev-red/30 bg-sev-red/[0.08]',
+  med: 'text-sev-amber border-sev-amber/30 bg-sev-amber/[0.08]',
+  low: 'text-ink-2 border-line bg-panel-2',
+}
+
 export default function IssueList({ issues, selectedIssues, onSelectionChange }: IssueListProps) {
   const [filter, setFilter] = useState<{ severity?: string; category?: string }>({})
-  const [expandedIssues, setExpandedIssues] = useState<Set<number>>(new Set())
 
   const filteredIssues = issues.filter((issue) => {
     if (filter.severity && issue.severity !== filter.severity) return false
@@ -34,49 +36,29 @@ export default function IssueList({ issues, selectedIssues, onSelectionChange }:
 
   const toggleIssue = (issueId: number) => {
     const newSelected = new Set(selectedIssues)
-    if (newSelected.has(issueId)) {
-      newSelected.delete(issueId)
-    } else {
-      newSelected.add(issueId)
-    }
+    if (newSelected.has(issueId)) newSelected.delete(issueId)
+    else newSelected.add(issueId)
     onSelectionChange(newSelected)
   }
 
-  const toggleExpand = (issueId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newExpanded = new Set(expandedIssues);
-    if (newExpanded.has(issueId)) {
-      newExpanded.delete(issueId);
-    } else {
-      newExpanded.add(issueId);
-    }
-    setExpandedIssues(newExpanded);
+  const parseLineSpan = (span?: string) => {
+    if (!span) return { start: 1, end: 1 }
+    const [start, end] = span.split('-').map(Number)
+    return { start: start || 1, end: end || start || 1 }
   }
 
-  const getSeverityVariant = (severity: string) => {
-    switch (severity.toLowerCase()) {
-      case 'high': return 'destructive'
-      case 'med': return 'secondary' // Yellowish usually, but secondary is grey/blue in default theme. we might need custom.
-      case 'low': return 'outline'
-      default: return 'default'
-    }
-  }
-
-  const parseLineSpan = (span?: string): { start: number, end: number } => {
-    if (!span) return { start: 1, end: 1 };
-    const [start, end] = span.split('-').map(Number);
-    return { start: start || 1, end: end || start || 1 };
-  }
+  const selectClasses =
+    'rounded-sm border border-line bg-panel-2 px-2.5 py-1.5 text-[12.5px] text-ink-2 focus:border-[#28394C] focus:outline-none'
 
   return (
     <div>
-      <div className="flex space-x-4 mb-4">
+      <div className="flex gap-2 border-b border-line-2 px-5 py-3.5">
         <select
           value={filter.severity || ''}
           onChange={(e) => setFilter({ ...filter, severity: e.target.value || undefined })}
-          className="px-3 py-1 border border-gray-300 rounded"
+          className={selectClasses}
         >
-          <option value="">All Severities</option>
+          <option value="">All severities</option>
           <option value="high">High</option>
           <option value="med">Medium</option>
           <option value="low">Low</option>
@@ -84,9 +66,9 @@ export default function IssueList({ issues, selectedIssues, onSelectionChange }:
         <select
           value={filter.category || ''}
           onChange={(e) => setFilter({ ...filter, category: e.target.value || undefined })}
-          className="px-3 py-1 border border-gray-300 rounded"
+          className={selectClasses}
         >
-          <option value="">All Categories</option>
+          <option value="">All categories</option>
           <option value="Bug">Bug</option>
           <option value="Security">Security</option>
           <option value="Code Smell">Code Smell</option>
@@ -96,59 +78,57 @@ export default function IssueList({ issues, selectedIssues, onSelectionChange }:
         </select>
       </div>
 
-      <div className="space-y-2">
+      <div>
         {filteredIssues.map((issue) => {
-          const { start, end } = parseLineSpan(issue.line_span);
+          const { start, end } = parseLineSpan(issue.line_span)
+          const selected = selectedIssues.has(issue.id)
           return (
-            <div
+            <button
               key={issue.id}
-              className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedIssues.has(issue.id) ? 'border-primary/50 bg-blue-50/50' : 'border-gray-200 hover:bg-gray-50'
-                }`}
               onClick={() => toggleIssue(issue.id)}
+              className={`flex w-full gap-3.5 border-b border-line-2 px-5 py-3.5 text-left transition-colors last:border-b-0 ${
+                selected ? 'bg-accent/[0.05]' : 'hover:bg-panel-2/60'
+              }`}
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <input
-                      type="checkbox"
-                      checked={selectedIssues.has(issue.id)}
-                      onChange={() => toggleIssue(issue.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                    <span className="font-medium text-sm">{issue.summary}</span>
-                    <Badge variant={getSeverityVariant(issue.severity)}>
-                      {issue.severity}
-                    </Badge>
-                    <Badge variant="outline">
-                      {issue.category}
-                    </Badge>
-                  </div>
-                  <div className="ml-6 space-y-1">
-                    <p className="text-sm text-gray-600">{issue.rationale}</p>
-                    <div className="flex items-center text-xs text-gray-500 font-mono">
-                      <span>{issue.file_path}</span>
-                      <span className="mx-2">:</span>
-                      <span>Lines {start}-{end}</span>
-                    </div>
-                    {/* 
-                           In a real app, we would fetch the code snippet here. 
-                           For now, we can only display it if passed, or we show a placeholder.
-                        */}
-                  </div>
-                </div>
-                <div className="flex flex-col items-end space-y-2">
-                  <span className="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-1 rounded">
-                    {(issue.confidence * 100).toFixed(0)}% Conf
+              <span
+                className={`mt-0.5 grid h-[15px] w-[15px] flex-none place-items-center rounded-sm border ${
+                  selected ? 'border-accent bg-accent' : 'border-faint'
+                }`}
+              >
+                {selected && (
+                  <svg viewBox="0 0 12 12" className="h-2.5 w-2.5" fill="none">
+                    <path d="M2.5 6.5l2.5 2.5 4.5-5.5" stroke="#0C1018" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </span>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-[12.5px] font-medium text-accent">{issue.summary}</span>
+                  <span
+                    className={`rounded-sm border px-1.5 py-px text-[11px] font-medium ${
+                      severityClass[issue.severity] || severityClass.low
+                    }`}
+                  >
+                    {issue.severity}
+                  </span>
+                  <span className="rounded-sm border border-line px-1.5 py-px text-[11px] text-ink-2">
+                    {issue.category}
                   </span>
                 </div>
+                <p className="mt-1.5 text-[13px] text-ink-2">{issue.rationale}</p>
+                <p className="mt-1.5 font-mono text-[11.5px] text-faint">
+                  {issue.file_path} : {start === end ? start : `${start}-${end}`}
+                </p>
               </div>
-            </div>
+
+              <span className="flex-none self-start font-mono text-[11px] text-faint">
+                {(issue.confidence * 100).toFixed(0)}%
+              </span>
+            </button>
           )
         })}
       </div>
     </div>
   )
 }
-
-

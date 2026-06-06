@@ -1,14 +1,15 @@
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from sqlalchemy.orm import Session
-from app.models.base import SessionLocal, Base, engine
-from app.models.repo import Repo
-from app.models.job import Job
-from app.workers.tasks import run_analysis
-import shutil
 from pathlib import Path
+
+from app.models.base import Base, SessionLocal, engine
+from app.models.issue import Issue
+from app.models.job import Job
+from app.models.repo import Repo
+from app.workers.tasks import run_analysis
 
 Base.metadata.create_all(bind=engine)
 
@@ -63,8 +64,12 @@ print(f"Created repo {repo.id} and job {job.id}")
 print("Running analysis...")
 
 try:
-    run_analysis.send(job.id)
-    print("Analysis job enqueued")
+    # Run the analysis actor's underlying function in-process so the seed
+    # produces a fully analyzed job without needing a separate worker.
+    run_analysis.fn(job.id)
+    db.refresh(job)
+    issue_count = db.query(Issue).filter(Issue.job_id == job.id).count()
+    print(f"Analysis complete: job status '{job.status}', {issue_count} issues found")
 except Exception as e:
     print(f"Error: {e}")
 

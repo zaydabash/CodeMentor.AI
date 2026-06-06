@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import DiffViewer from '@/components/DiffViewer'
 
@@ -9,11 +10,11 @@ describe('DiffViewer', () => {
 -old line
 +new line
  unchanged`
-    
+
     render(<DiffViewer diff={diff} />)
-    
-    expect(screen.getByText(/old line/)).toBeInTheDocument()
-    expect(screen.getByText(/new line/)).toBeInTheDocument()
+
+    expect(screen.getByText(/old line/)).toBeDefined()
+    expect(screen.getByText(/new line/)).toBeDefined()
   })
 })
 

@@ -1,12 +1,12 @@
 import os
-import zipfile
 import shutil
 import uuid
-from pathlib import Path
-from sqlalchemy.orm import Session
-from app.models.repo import Repo
+import zipfile
+
 from git import Repo as GitRepo
-import tempfile
+from sqlalchemy.orm import Session
+
+from app.models.repo import Repo
 
 
 async def ingest_zip(file, workspace_dir: str, db: Session) -> int:

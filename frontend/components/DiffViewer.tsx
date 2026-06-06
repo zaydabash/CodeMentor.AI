@@ -36,45 +36,38 @@ export default function DiffViewer({ diff }: DiffViewerProps) {
     }
   }
 
+  const column = (items: LineItem[], side: 'left' | 'right') => (
+    <div className="flex-1 font-mono text-[12px] leading-[1.7]">
+      {items.map((item, idx) => {
+        const removed = side === 'left' && item.line.startsWith('-')
+        const added = side === 'right' && item.line.startsWith('+')
+        return (
+          <div
+            key={idx}
+            className={`flex px-3 ${
+              removed ? 'bg-sev-red/[0.1]' : added ? 'bg-sev-green/[0.1]' : ''
+            }`}
+          >
+            <span className="w-7 flex-none select-none pr-3 text-right text-faint">{item.num || ''}</span>
+            <span
+              className={`whitespace-pre ${
+                removed ? 'text-sev-red' : added ? 'text-sev-green' : 'text-ink-2'
+              }`}
+            >
+              {item.line || ' '}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto py-2">
       <div className="flex">
-        <div className="flex-1 border-r border-gray-200">
-          <div className="bg-gray-50 p-2 font-mono text-xs">
-            {leftLines.map((item, idx) => (
-              <div
-                key={idx}
-                className={`p-1 ${
-                  item.line.startsWith('-') ? 'bg-red-100' : ''
-                }`}
-              >
-                <span className="text-gray-500 w-8 inline-block">{item.num || ''}</span>
-                <span className={item.line.startsWith('-') ? 'text-red-800' : ''}>
-                  {item.line || ' '}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="flex-1">
-          <div className="bg-gray-50 p-2 font-mono text-xs">
-            {rightLines.map((item, idx) => (
-              <div
-                key={idx}
-                className={`p-1 ${
-                  item.line.startsWith('+') ? 'bg-green-100' : ''
-                }`}
-              >
-                <span className="text-gray-500 w-8 inline-block">{item.num || ''}</span>
-                <span className={item.line.startsWith('+') ? 'text-green-800' : ''}>
-                  {item.line || ' '}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <div className="flex-1 border-r border-line-2">{column(leftLines, 'left')}</div>
+        {column(rightLines, 'right')}
       </div>
     </div>
   )
 }
-

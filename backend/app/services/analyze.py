@@ -1,13 +1,13 @@
+import json
 import os
 from pathlib import Path
-from typing import List, Dict
-from app.services.lint import run_ruff, run_bandit, run_eslint
-from app.llm.provider import get_llm_provider
+
 from app.llm.prompts import get_issue_identification_prompt
-import json
+from app.llm.provider import get_llm_provider
+from app.services.lint import run_bandit, run_eslint, run_ruff
 
 
-def detect_languages(repo_path: str) -> List[str]:
+def detect_languages(repo_path: str) -> list[str]:
     languages = set()
     for ext in Path(repo_path).rglob("*"):
         if ext.is_file():
@@ -19,8 +19,8 @@ def detect_languages(repo_path: str) -> List[str]:
     return list(languages)
 
 
-def chunk_file(file_path: str, max_chunk_size: int = 2000) -> List[str]:
-    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+def chunk_file(file_path: str, max_chunk_size: int = 2000) -> list[str]:
+    with open(file_path, encoding="utf-8", errors="ignore") as f:
         content = f.read()
         lines = content.split("\n")
         chunks = []
@@ -43,7 +43,7 @@ def chunk_file(file_path: str, max_chunk_size: int = 2000) -> List[str]:
         return chunks
 
 
-def analyze_repo(repo_path: str) -> List[Dict]:
+def analyze_repo(repo_path: str) -> list[dict]:
     all_issues = []
 
     languages = detect_languages(repo_path)
@@ -68,7 +68,7 @@ def analyze_repo(repo_path: str) -> List[Dict]:
     for file_path in source_files[:50]:
         try:
             rel_path = os.path.relpath(file_path, repo_path)
-            
+
             # Determine language for parser
             suffix = Path(file_path).suffix.lower()
             if suffix == ".py":
@@ -82,7 +82,7 @@ def analyze_repo(repo_path: str) -> List[Dict]:
             else:
                 language = "unknown"
 
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 content = f.read()
 
             if language != "unknown":
@@ -96,13 +96,13 @@ def analyze_repo(repo_path: str) -> List[Dict]:
                 chunk_text = chunk["content"]
                 start_line = chunk["start_line"]
                 end_line = chunk["end_line"]
-                
+
                 # Context header to help LLM
                 context_prompt = f"File: {rel_path}\nLines: {start_line}-{end_line}\n\n{chunk_text}"
-                
+
                 prompt = get_issue_identification_prompt(context_prompt, rel_path)
                 response = llm_provider.complete(prompt, temperature=0.2)
-                
+
                 try:
                     parsed = json.loads(response)
                     if isinstance(parsed, list):

@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 
 def should_ignore_file(file_path: str) -> bool:

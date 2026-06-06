@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { uploadZip, importGitUrl } from '@/lib/api'
+import TopNav from '@/components/TopNav'
 
 export default function UploadPage() {
   const [mode, setMode] = useState<'zip' | 'git'>('zip')
@@ -14,7 +15,6 @@ export default function UploadPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-
     try {
       let repoId: number
       if (mode === 'zip' && file) {
@@ -24,77 +24,64 @@ export default function UploadPage() {
       } else {
         return
       }
-
       router.push(`/jobs/new?repo_id=${repoId}`)
     } catch (error) {
       console.error('Upload failed:', error)
-      alert('Upload failed. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
+  const tab = (value: 'zip' | 'git', label: string) => (
+    <button
+      type="button"
+      onClick={() => setMode(value)}
+      className={`rounded-sm border px-3.5 py-1.5 text-[13px] transition-colors ${
+        mode === value
+          ? 'border-line bg-panel-2 text-ink'
+          : 'border-transparent text-ink-2 hover:text-ink'
+      }`}
+    >
+      {label}
+    </button>
+  )
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <a href="/" className="text-xl font-semibold">CodeMentor.AI</a>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen">
+      <TopNav />
 
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-3xl font-bold mb-8">Upload Repository</h1>
+      <main className="mx-auto max-w-2xl px-6 py-16">
+        <div className="kicker mb-2">New analysis</div>
+        <h1 className="mb-8 text-[24px]">Upload a repository</h1>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex space-x-4 mb-6">
-            <button
-              onClick={() => setMode('zip')}
-              className={`px-4 py-2 rounded ${
-                mode === 'zip' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-              }`}
-            >
-              Upload ZIP
-            </button>
-            <button
-              onClick={() => setMode('git')}
-              className={`px-4 py-2 rounded ${
-                mode === 'git' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-              }`}
-            >
-              Git URL
-            </button>
+        <div className="rounded-sm border border-line bg-panel p-6">
+          <div className="mb-6 flex gap-2">
+            {tab('zip', 'Upload ZIP')}
+            {tab('git', 'Git URL')}
           </div>
 
           <form onSubmit={handleSubmit}>
             {mode === 'zip' ? (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select ZIP file
-                </label>
+                <label className="mb-2 block text-[12.5px] text-ink-2">Select ZIP file</label>
                 <input
                   type="file"
                   accept=".zip"
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                   required
+                  className="block w-full text-[13px] text-ink-2 file:mr-4 file:rounded-sm file:border file:border-line file:bg-panel-2 file:px-3.5 file:py-2 file:text-[13px] file:text-ink hover:file:border-[#28394C]"
                 />
               </div>
             ) : (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Git Repository URL
-                </label>
+                <label className="mb-2 block text-[12.5px] text-ink-2">Git repository URL</label>
                 <input
                   type="url"
                   value={gitUrl}
                   onChange={(e) => setGitUrl(e.target.value)}
                   placeholder="https://github.com/user/repo.git"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
+                  className="w-full rounded-sm border border-line bg-panel-2 px-3 py-2 font-mono text-[13px] text-ink placeholder:text-faint focus:border-[#28394C] focus:outline-none"
                 />
               </div>
             )}
@@ -102,14 +89,17 @@ export default function UploadPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-6 w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+              className="btn-primary mt-6 w-full rounded-sm px-4 py-2.5 text-[13.5px] font-normal"
             >
               {loading ? 'Processing...' : 'Continue'}
             </button>
           </form>
         </div>
+
+        <p className="mt-4 text-[12.5px] leading-relaxed text-faint">
+          Git URL imports require a public repository. If an import fails, upload a ZIP instead.
+        </p>
       </main>
     </div>
   )
 }
-

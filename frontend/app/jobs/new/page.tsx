@@ -32,13 +32,10 @@ export default function NewJobPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        {loading ? (
-          <p className="text-gray-600">Creating analysis job...</p>
-        ) : (
-          <p className="text-gray-600">Redirecting...</p>
-        )}
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="flex items-center gap-2.5 text-[13.5px] text-ink-2">
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+        {loading ? 'Creating analysis job...' : 'Redirecting...'}
       </div>
     </div>
   )

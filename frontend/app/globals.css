@@ -1,14 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
+@layer base {
+  body {
+    background-color: #0C1018;
+    /* subtle dot grid */
+    background-image: radial-gradient(rgba(255, 255, 255, 0.026) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color: #E8EDF4;
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    font-weight: 300;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* faint top-center radial glow for depth */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(180, 200, 220, 0.05), transparent 70%);
+  }
+
+  h1, h2, h3 {
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
 }
 
-body {
-  color: rgb(var(--foreground));
-  background: rgb(var(--background));
-}
+@layer components {
+  .kicker {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #50606F;
+  }
 
+  /* primary action: inverted light button on the dark canvas */
+  .btn-primary {
+    background: #D4DCE8;
+    color: #080C11;
+    border: 1px solid #D4DCE8;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .btn-primary:hover { background: #E2E8F2; border-color: #E2E8F2; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-ghost {
+    background: transparent;
+    color: #8A9AAD;
+    border: 1px solid #1C2635;
+    transition: color 0.12s, border-color 0.12s;
+  }
+  .btn-ghost:hover { color: #E8EDF4; border-color: #28394C; }
+
+  /* card hover used on interactive panels */
+  .lift {
+    transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+  }
+  .lift:hover {
+    border-color: #2C3D52;
+    background: #16202C;
+  }
+}

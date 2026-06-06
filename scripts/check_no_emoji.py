@@ -5,14 +5,17 @@ from pathlib import Path
 
 
 def has_emoji(text: str) -> bool:
+    # Target actual emoji blocks only. The previous broad range
+    # (U+24C2-U+1F251) also matched box-drawing and arrow characters used in
+    # ASCII diagrams, producing false positives.
     emoji_pattern = re.compile(
         "["
-        "\U0001F600-\U0001F64F"
-        "\U0001F300-\U0001F5FF"
-        "\U0001F680-\U0001F6FF"
-        "\U0001F1E0-\U0001F1FF"
-        "\U00002702-\U000027B0"
-        "\U000024C2-\U0001F251"
+        "\U0001F300-\U0001FAFF"  # symbols, pictographs, emoji extensions
+        "\U0001F1E0-\U0001F1FF"  # regional indicators (flags)
+        "\U00002600-\U000026FF"  # miscellaneous symbols
+        "\U00002700-\U000027BF"  # dingbats (includes check mark, cross mark)
+        "\U0000FE00-\U0000FE0F"  # variation selectors
+        "\U0001F000-\U0001F0FF"  # mahjong, dominoes, playing cards
         "]+",
         flags=re.UNICODE,
     )

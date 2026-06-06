@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { getJob, getJobIssues, proposeFixes } from '@/lib/api'
 import IssueList from '@/components/IssueList'
-import FileTree from '@/components/FileTree'
+import TopNav from '@/components/TopNav'
 
 export default function JobPage() {
   const params = useParams()
@@ -38,92 +38,88 @@ export default function JobPage() {
   }, [jobId])
 
   const handleGeneratePR = async () => {
-    if (selectedIssues.size === 0) {
-      alert('Please select at least one issue')
-      return
-    }
-
+    if (selectedIssues.size === 0) return
     try {
       const result = await proposeFixes(jobId, Array.from(selectedIssues))
       router.push(`/pr/${result.pr_id}`)
     } catch (error) {
       console.error('Failed to generate PR:', error)
-      alert('Failed to generate PR. Please try again.')
     }
   }
 
-  if (loading) {
-    return <div className="p-8">Loading...</div>
-  }
-
-  if (!job) {
-    return <div className="p-8">Job not found</div>
-  }
+  const showIssues = (job?.status === 'pr_ready' || job?.status === 'done') && issues.length > 0
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <a href="/" className="text-xl font-semibold">CodeMentor.AI</a>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen">
+      <TopNav />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Job #{jobId}</h1>
-          <div className="flex items-center space-x-4">
-            <span className={`px-3 py-1 rounded text-sm ${
-              job.status === 'done' ? 'bg-green-100 text-green-800' :
-              job.status === 'error' ? 'bg-red-100 text-red-800' :
-              'bg-yellow-100 text-yellow-800'
-            }`}>
-              {job.status}
-            </span>
-            {job.stats && (
-              <span className="text-gray-600">
-                {job.stats.issues_found} issues found
-              </span>
+      <main className="mx-auto max-w-5xl px-6 py-12">
+        {loading ? (
+          <p className="text-[13.5px] text-ink-2">Loading...</p>
+        ) : !job ? (
+          <p className="text-[13.5px] text-ink-2">Job not found.</p>
+        ) : (
+          <>
+            <div className="kicker mb-2">Analysis</div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-[22px]">Job #{jobId}</h1>
+            </div>
+            <div className="mt-3 flex items-center gap-3">
+              <StatusBadge status={job.status} />
+              {job.stats && (
+                <span className="text-[13px] text-ink-2">{job.stats.issues_found} issues found</span>
+              )}
+            </div>
+
+            {job.status === 'analyzing' && (
+              <div className="mt-6 rounded-sm border border-line bg-panel p-8 text-center text-[13.5px] text-ink-2">
+                Analysis in progress...
+              </div>
             )}
-          </div>
-        </div>
 
-        {job.status === 'pr_ready' && issues.length > 0 && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Issues</h2>
-              <button
-                onClick={handleGeneratePR}
-                disabled={selectedIssues.size === 0}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
-              >
-                Generate PR Draft ({selectedIssues.size})
-              </button>
-            </div>
-            <IssueList
-              issues={issues}
-              selectedIssues={selectedIssues}
-              onSelectionChange={setSelectedIssues}
-            />
-          </div>
-        )}
+            {job.error && (
+              <div className="mt-6 rounded-sm border border-sev-red/40 bg-sev-red/[0.08] p-4 text-[13.5px] text-sev-red">
+                {job.error}
+              </div>
+            )}
 
-        {job.status === 'analyzing' && (
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <p className="text-gray-600">Analysis in progress...</p>
-          </div>
-        )}
-
-        {job.error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">Error: {job.error}</p>
-          </div>
+            {showIssues && (
+              <div className="mt-7 rounded-sm border border-line bg-panel">
+                <div className="flex items-center justify-between border-b border-line-2 px-5 py-4">
+                  <h2 className="text-[14px] font-medium text-ink">Issues</h2>
+                  <button
+                    onClick={handleGeneratePR}
+                    disabled={selectedIssues.size === 0}
+                    className="btn-primary rounded-sm px-3.5 py-2 text-[13px] font-normal"
+                  >
+                    Generate PR draft ({selectedIssues.size})
+                  </button>
+                </div>
+                <IssueList
+                  issues={issues}
+                  selectedIssues={selectedIssues}
+                  onSelectionChange={setSelectedIssues}
+                />
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
   )
 }
 
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, string> = {
+    done: 'text-sev-green border-sev-green/30 bg-sev-green/[0.08]',
+    pr_ready: 'text-sev-green border-sev-green/30 bg-sev-green/[0.08]',
+    error: 'text-sev-red border-sev-red/30 bg-sev-red/[0.08]',
+    analyzing: 'text-sev-amber border-sev-amber/30 bg-sev-amber/[0.08]',
+    queued: 'text-ink-2 border-line bg-panel-2',
+  }
+  return (
+    <span className={`rounded-sm border px-2.5 py-0.5 font-mono text-[11.5px] ${map[status] || map.queued}`}>
+      {status}
+    </span>
+  )
+}
